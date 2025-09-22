@@ -289,8 +289,8 @@ return false;
 }
 
 function cloudDocRef() {
-// single-document storage to keep implementation simple
-return firebaseDB.collection('users').doc(firebaseUser.uid).collection('state').doc('saved');
+// Use a shared "household" document so all devices see the same data
+return firebaseDB.collection('household').doc('home-calculator-saves');
 }
 
 async function loadFromCloud() {
@@ -348,7 +348,9 @@ renderTable(remote);
 // migrate local to cloud
 updateSyncStatus(`Migrating ${local.length} local entries to cloud...`);
 await saveAllToCloud(local);
-updateSyncStatus('Migration complete');
+updateSyncStatus(`Migration complete - ${local.length} entries now in cloud`);
+// Also re-render the table to make sure it shows
+renderTable(local);
 } else {
 updateSyncStatus('No data to sync');
 }
