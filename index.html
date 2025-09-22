@@ -1,0 +1,155 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>PITI + Property Comparison</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<header class="app-header">
+<h1>PITI Calculator and Property Compare</h1>
+<p>Calculate monthly costs (Principal, Interest, Taxes, Insurance), add solar, and compare properties.</p>
+</header>
+
+<main class="container">
+<section class="card">
+<h2>Calculator</h2>
+<form id="calc-form">
+<div class="grid">
+<div class="field">
+<label for="price">Home price ($)</label>
+<input id="price" type="number" inputmode="decimal" min="0" step="1000" placeholder="500000" required />
+</div>
+<div class="field">
+<label for="downPayment">Down payment ($)</label>
+<input id="downPayment" type="number" inputmode="decimal" min="0" step="1000" placeholder="100000" />
+</div>
+<div class="field">
+<label for="rate">Interest rate (APR %)</label>
+<input id="rate" type="number" inputmode="decimal" min="0" step="0.01" placeholder="6.75" required />
+</div>
+<div class="field">
+<label for="termYears">Term (years)</label>
+<input id="termYears" type="number" inputmode="numeric" min="1" step="1" value="30" />
+</div>
+
+<div class="field field-row">
+<input id="includeSolar" type="checkbox" checked />
+<label for="includeSolar">Include solar</label>
+</div>
+<div class="field">
+<label for="solarCost">Solar cost ($)</label>
+<input id="solarCost" type="number" inputmode="decimal" min="0" step="500" value="16000" />
+</div>
+<div class="field field-row">
+<input id="financeSolar" type="checkbox" checked />
+<label for="financeSolar">Finance solar into loan</label>
+</div>
+
+<div class="field">
+<label for="taxRate">Property tax rate (%/yr)</label>
+<input id="taxRate" type="number" inputmode="decimal" min="0" step="0.01" value="1.6" />
+<small>Default uses an approximate Menifee, CA effective rate. Adjust as needed.</small>
+</div>
+<div class="field">
+<label for="hoaMonthly">HOA ($/mo)</label>
+<input id="hoaMonthly" type="number" inputmode="decimal" min="0" step="10" value="0" />
+</div>
+<div class="field">
+<label for="insMonthly">Homeowners insurance ($/mo)</label>
+<input id="insMonthly" type="number" inputmode="decimal" min="0" step="10" value="150" />
+</div>
+</div>
+
+<div class="actions">
+<button type="button" id="btn-calc">Calculate</button>
+</div>
+</form>
+
+<div id="results" class="results hidden">
+<h3>Monthly Breakdown</h3>
+<div class="breakdown">
+<div><span>P&I</span><span id="resPI"></span></div>
+<div><span>Taxes</span><span id="resTaxes"></span></div>
+<div><span>Insurance</span><span id="resIns"></span></div>
+<div><span>HOA</span><span id="resHOA"></span></div>
+</div>
+<div class="total"><span>Total PITI</span><span id="resTotal"></span></div>
+</div>
+</section>
+
+<section class="card">
+<h2>Property details</h2>
+<form id="details-form">
+<div class="grid">
+<div class="field">
+<label for="address">Address</label>
+<input id="address" type="text" placeholder="123 Main St, Menifee, CA" />
+</div>
+<div class="field">
+<label for="bedrooms">Bedrooms</label>
+<input id="bedrooms" type="number" inputmode="numeric" min="0" step="1" />
+</div>
+<div class="field">
+<label for="bathrooms">Bathrooms</label>
+<input id="bathrooms" type="number" inputmode="decimal" min="0" step="0.5" />
+</div>
+<div class="field">
+<label for="sqft">Square footage</label>
+<input id="sqft" type="number" inputmode="numeric" min="0" step="50" />
+</div>
+<div class="field">
+<label for="lotSqft">Lot square footage</label>
+<input id="lotSqft" type="number" inputmode="numeric" min="0" step="100" />
+</div>
+<div class="field">
+<label for="yearBuilt">Year built</label>
+<input id="yearBuilt" type="number" inputmode="numeric" min="1800" step="1" />
+</div>
+<div class="field">
+<label for="listingUrl">Listing URL</label>
+<input id="listingUrl" type="url" placeholder="https://..." />
+</div>
+</div>
+<div class="actions">
+<button type="button" id="btn-save">Save to list</button>
+<button type="button" id="btn-clear-all" class="secondary">Clear all saved</button>
+</div>
+</form>
+</section>
+
+<section class="card">
+<h2>Saved comparisons</h2>
+<div class="table-wrap">
+<table id="compare-table">
+<thead>
+<tr>
+<th>Address</th>
+<th>Beds</th>
+<th>Baths</th>
+<th>Sqft</th>
+<th>Lot</th>
+<th>Year</th>
+<th>P&I</th>
+<th>Taxes</th>
+<th>Ins</th>
+<th>HOA</th>
+<th>Total</th>
+<th>Link</th>
+<th></th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+</section>
+</main>
+
+<footer class="app-footer">
+<div>Data stored locally in your browser. Adjust tax rate per property as needed.</div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
