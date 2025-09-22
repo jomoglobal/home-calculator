@@ -207,7 +207,21 @@ updateResults();
 cloudSyncInit();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+// Test if Firebase is loaded
+if (typeof firebase === 'undefined') {
+alert('Firebase not loaded! Check if firebase-config.js is loading properly.');
+updateSyncStatus('Firebase scripts not loaded', true);
+return;
+}
+if (!window.firebaseConfig) {
+alert('Firebase config not found! Check firebase-config.js');
+updateSyncStatus('Firebase config missing', true);
+return;
+}
+updateSyncStatus('Firebase loaded, starting app...');
+init();
+});
 
 // ------------------- Cloud sync (Firebase) -------------------
 
