@@ -221,9 +221,14 @@ function updateSyncStatus(message, isError = false) {
 const statusEl = document.getElementById('sync-status');
 if (statusEl) {
 statusEl.textContent = message;
-statusEl.style.color = isError ? '#d32f2f' : '#666';
+statusEl.style.color = isError ? '#d32f2f' : '#333';
+statusEl.style.backgroundColor = isError ? '#ffebee' : '#f5f5f5';
 }
 console.log('SYNC:', message);
+// Also show an alert for critical errors
+if (isError && message.includes('Firebase error')) {
+alert('Firebase Error: ' + message);
+}
 }
 
 function isFirebaseConfigured() {
