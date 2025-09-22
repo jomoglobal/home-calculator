@@ -33,6 +33,10 @@ return [];
 
 function saveAll(entries) {
 localStorage.setItem('piti_saved_v1', JSON.stringify(entries));
+// also push to cloud if enabled (fire-and-forget)
+if (isFirebaseConfigured()) {
+try { scheduleCloudSave(entries); } catch (e) { /* noop */ }
+}
 }
 
 function collectCalcInputs() {
@@ -198,6 +202,79 @@ renderTable(loadSaved());
 
 // render initial calculation with current defaults
 updateResults();
+
+// initialize cloud sync (loads from Firestore if available)
+cloudSyncInit();
 }
 
 document.addEventListener('DOMContentLoaded', init);
+
+// ------------------- Cloud sync (Firebase) -------------------
+
+let firebaseApp = null;
+let firebaseAuth = null;
+let firebaseDB = null;
+let firebaseUser = null;
+let cloudSaveTimer = null;
+
+function isFirebaseConfigured() {
+return typeof window !== 'undefined' && window.firebase && window.firebaseConfig;
+}
+
+async function ensureFirebase() {
+if (!isFirebaseConfigured()) return false;
+if (!firebaseApp) {
+firebaseApp = firebase.initializeApp(window.firebaseConfig);
+firebaseAuth = firebase.auth();
+firebaseDB = firebase.firestore();
+}
+if (!firebaseAuth.currentUser) {
+await firebaseAuth.signInAnonymously();
+}
+firebaseUser = firebaseAuth.currentUser;
+return !!firebaseUser;
+}
+
+function cloudDocRef() {
+// single-document storage to keep implementation simple
+return firebaseDB.collection('users').doc(firebaseUser.uid).collection('state').doc('saved');
+}
+
+async function loadFromCloud() {
+const ok = await ensureFirebase();
+if (!ok) return null;
+const snap = await cloudDocRef().get();
+if (!snap.exists) return [];
+const data = snap.data() || {};
+return Array.isArray(data.entries) ? data.entries : [];
+}
+
+async function saveAllToCloud(entries) {
+const ok = await ensureFirebase();
+if (!ok) return;
+await cloudDocRef().set({ entries, updatedAt: Date.now() }, { merge: true });
+}
+
+function scheduleCloudSave(entries) {
+clearTimeout(cloudSaveTimer);
+cloudSaveTimer = setTimeout(() => { saveAllToCloud(entries); }, 300);
+}
+
+async function cloudSyncInit() {
+try {
+const ok = await ensureFirebase();
+if (!ok) return;
+const local = loadSaved();
+const remote = await loadFromCloud();
+if (remote && remote.length) {
+// prefer remote when available
+saveAll(remote);
+renderTable(remote);
+} else if (local && local.length) {
+// migrate local to cloud
+await saveAllToCloud(local);
+}
+} catch (e) {
+console.warn('Cloud sync init failed', e);
+}
+}
