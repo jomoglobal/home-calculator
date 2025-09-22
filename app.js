@@ -319,11 +319,15 @@ const ok = await ensureFirebase();
 if (!ok) return;
 try {
 updateSyncStatus(`Saving ${entries.length} entries to cloud...`);
+console.log('Attempting to save to:', cloudDocRef().path);
+console.log('User ID:', firebaseUser?.uid);
 await cloudDocRef().set({ entries, updatedAt: Date.now() }, { merge: true });
 updateSyncStatus(`Saved ${entries.length} entries to cloud`);
 } catch (error) {
 updateSyncStatus(`Save error: ${error.message}`, true);
 console.error('Cloud save error:', error);
+console.error('Error code:', error.code);
+console.error('Error details:', error.details);
 }
 }
 
@@ -340,16 +344,20 @@ if (!ok) return;
 const local = loadSaved();
 const remote = await loadFromCloud();
 if (remote && remote.length) {
-// prefer remote when available
-updateSyncStatus(`Using cloud data (${remote.length} entries)`);
-saveAll(remote);
-renderTable(remote);
+// merge remote with local data (avoid duplicates by ID)
+const localIds = new Set(local.map(e => e.id));
+const newFromLocal = local.filter(e => !remote.some(r => r.id === e.id));
+const merged = [...remote, ...newFromLocal];
+updateSyncStatus(`Merged: ${remote.length} from cloud + ${newFromLocal.length} local = ${merged.length} total`);
+saveAll(merged);
+renderTable(merged);
+// upload the merged data back to cloud
+await saveAllToCloud(merged);
 } else if (local && local.length) {
 // migrate local to cloud
 updateSyncStatus(`Migrating ${local.length} local entries to cloud...`);
 await saveAllToCloud(local);
 updateSyncStatus(`Migration complete - ${local.length} entries now in cloud`);
-// Also re-render the table to make sure it shows
 renderTable(local);
 } else {
 updateSyncStatus('No data to sync');
