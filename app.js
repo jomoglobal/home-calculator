@@ -93,6 +93,8 @@ const details = collectDetailsInputs();
 const inputs = collectCalcInputs();
 const breakdown = computeBreakdown();
 
+console.log('Saving entry with price:', inputs.price);
+
 const entry = {
 id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
 details,
@@ -155,7 +157,7 @@ tr.innerHTML = `
 <td>${formatCurrency(b.monthlyTaxes)}</td>
 <td>${formatCurrency(b.monthlyIns)}</td>
 <td>${formatCurrency(b.monthlyHOA)}</td>
-<td><strong>${formatCurrency(b.total)}</strong></td>
+<td><strong>${formatCurrency(b.total)}/mo</strong></td>
 <td>${link}</td>
 <td><button class="danger" data-id="${escapeAttr(e.id)}">Remove</button></td>
 `;
