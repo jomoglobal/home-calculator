@@ -195,6 +195,9 @@ t = setTimeout(updateResults, 200);
 
 // hydrate saved
 renderTable(loadSaved());
+
+// render initial calculation with current defaults
+updateResults();
 }
 
 document.addEventListener('DOMContentLoaded', init);

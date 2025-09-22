@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>PITI + Property Comparison</title>
+<title>Glaiza and Joe's House Hunting Tracker</title>
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 <header class="app-header">
-<h1>PITI Calculator and Property Compare</h1>
+<h1>Glaiza and Joe's House Hunting Tracker</h1>
 <p>Calculate monthly costs (Principal, Interest, Taxes, Insurance), add solar, and compare properties.</p>
 </header>
 
@@ -19,7 +19,7 @@
 <div class="grid">
 <div class="field">
 <label for="price">Home price ($)</label>
-<input id="price" type="number" inputmode="decimal" min="0" step="1000" placeholder="500000" required />
+<input id="price" type="number" inputmode="decimal" min="0" step="1000" value="600000" placeholder="600000" required />
 </div>
 <div class="field">
 <label for="downPayment">Down payment ($)</label>
@@ -27,7 +27,7 @@
 </div>
 <div class="field">
 <label for="rate">Interest rate (APR %)</label>
-<input id="rate" type="number" inputmode="decimal" min="0" step="0.01" placeholder="6.75" required />
+<input id="rate" type="number" inputmode="decimal" min="0" step="0.01" value="5.65" placeholder="5.65" required />
 </div>
 <div class="field">
 <label for="termYears">Term (years)</label>
@@ -35,7 +35,7 @@
 </div>
 
 <div class="field field-row">
-<input id="includeSolar" type="checkbox" checked />
+<input id="includeSolar" type="checkbox" />
 <label for="includeSolar">Include solar</label>
 </div>
 <div class="field">
@@ -147,7 +147,7 @@
 </main>
 
 <footer class="app-footer">
-<div>Data stored locally in your browser. Adjust tax rate per property as needed.</div>
+<div>Data is stored locally in your browser (on this device) using localStorage. Adjust tax rate per property as needed.</div>
 </footer>
 
 <script src="app.js"></script>
