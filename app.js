@@ -217,22 +217,51 @@ let firebaseDB = null;
 let firebaseUser = null;
 let cloudSaveTimer = null;
 
+function updateSyncStatus(message, isError = false) {
+const statusEl = document.getElementById('sync-status');
+if (statusEl) {
+statusEl.textContent = message;
+statusEl.style.color = isError ? '#d32f2f' : '#666';
+}
+console.log('SYNC:', message);
+}
+
 function isFirebaseConfigured() {
-return typeof window !== 'undefined' && window.firebase && window.firebaseConfig;
+const configured = typeof window !== 'undefined' && window.firebase && window.firebaseConfig;
+if (!configured) {
+updateSyncStatus('Firebase not configured', true);
+}
+return configured;
 }
 
 async function ensureFirebase() {
+updateSyncStatus('Initializing Firebase...');
 if (!isFirebaseConfigured()) return false;
+
+try {
 if (!firebaseApp) {
+updateSyncStatus('Setting up Firebase app...');
 firebaseApp = firebase.initializeApp(window.firebaseConfig);
 firebaseAuth = firebase.auth();
 firebaseDB = firebase.firestore();
 }
+
 if (!firebaseAuth.currentUser) {
-await firebaseAuth.signInAnonymously();
-}
+updateSyncStatus('Signing in anonymously...');
+const result = await firebaseAuth.signInAnonymously();
+firebaseUser = result.user;
+updateSyncStatus(`Signed in: ${firebaseUser.uid}`);
+} else {
 firebaseUser = firebaseAuth.currentUser;
+updateSyncStatus(`Already signed in: ${firebaseUser.uid}`);
+}
+
 return !!firebaseUser;
+} catch (error) {
+updateSyncStatus(`Firebase error: ${error.message}`, true);
+console.error('Firebase setup error:', error);
+return false;
+}
 }
 
 function cloudDocRef() {
@@ -243,16 +272,35 @@ return firebaseDB.collection('users').doc(firebaseUser.uid).collection('state').
 async function loadFromCloud() {
 const ok = await ensureFirebase();
 if (!ok) return null;
+try {
+updateSyncStatus('Loading from cloud...');
 const snap = await cloudDocRef().get();
-if (!snap.exists) return [];
+if (!snap.exists) {
+updateSyncStatus('No cloud data found');
+return [];
+}
 const data = snap.data() || {};
-return Array.isArray(data.entries) ? data.entries : [];
+const entries = Array.isArray(data.entries) ? data.entries : [];
+updateSyncStatus(`Loaded ${entries.length} entries from cloud`);
+return entries;
+} catch (error) {
+updateSyncStatus(`Load error: ${error.message}`, true);
+console.error('Cloud load error:', error);
+return null;
+}
 }
 
 async function saveAllToCloud(entries) {
 const ok = await ensureFirebase();
 if (!ok) return;
+try {
+updateSyncStatus(`Saving ${entries.length} entries to cloud...`);
 await cloudDocRef().set({ entries, updatedAt: Date.now() }, { merge: true });
+updateSyncStatus(`Saved ${entries.length} entries to cloud`);
+} catch (error) {
+updateSyncStatus(`Save error: ${error.message}`, true);
+console.error('Cloud save error:', error);
+}
 }
 
 function scheduleCloudSave(entries) {
@@ -262,19 +310,26 @@ cloudSaveTimer = setTimeout(() => { saveAllToCloud(entries); }, 300);
 
 async function cloudSyncInit() {
 try {
+updateSyncStatus('Starting cloud sync...');
 const ok = await ensureFirebase();
 if (!ok) return;
 const local = loadSaved();
 const remote = await loadFromCloud();
 if (remote && remote.length) {
 // prefer remote when available
+updateSyncStatus(`Using cloud data (${remote.length} entries)`);
 saveAll(remote);
 renderTable(remote);
 } else if (local && local.length) {
 // migrate local to cloud
+updateSyncStatus(`Migrating ${local.length} local entries to cloud...`);
 await saveAllToCloud(local);
+updateSyncStatus('Migration complete');
+} else {
+updateSyncStatus('No data to sync');
 }
 } catch (e) {
-console.warn('Cloud sync init failed', e);
+updateSyncStatus(`Sync init failed: ${e.message}`, true);
+console.error('Cloud sync init failed', e);
 }
 }
