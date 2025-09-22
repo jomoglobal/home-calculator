@@ -114,11 +114,19 @@ saveAll(all);
 renderTable(all);
 }
 
-function removeEntry(id) {
+async function removeEntry(id) {
 const all = loadSaved();
 const next = all.filter(e => e.id !== id);
 saveAll(next);
 renderTable(next);
+// Also sync the deletion to cloud
+if (isFirebaseConfigured()) {
+try {
+await saveAllToCloud(next);
+} catch (e) {
+console.warn('Failed to sync deletion to cloud:', e);
+}
+}
 }
 
 function clearAll() {
@@ -144,6 +152,7 @@ const yearBuilt = escapeHtml(d.yearBuilt || '');
 const link = renderLink(d.listingUrl || '');
 const price = formatCurrency(i.price || 0);
 const image = renderImage(e.imageUrl || '');
+console.log('Rendering entry:', e.id, 'price:', i.price, 'formatted:', price);
 tr.innerHTML = `
 <td>${image}</td>
 <td>${address}</td>
@@ -166,9 +175,9 @@ tbody.appendChild(tr);
 
 // bind remove buttons
 for (const btn of tbody.querySelectorAll('button[data-id]')) {
-btn.addEventListener('click', (ev) => {
+btn.addEventListener('click', async (ev) => {
 const id = ev.currentTarget.getAttribute('data-id');
-removeEntry(id);
+await removeEntry(id);
 });
 }
 }
@@ -194,27 +203,46 @@ return String(str).replace(/["'<>&]/g, (c) => ({ '"': '&quot;', "'": '&#39;', '<
 
 async function extractImageFromUrl(url) {
 try {
-// Use a CORS proxy to fetch the page content
+console.log('Attempting to extract image from:', url);
+// Try a simpler approach - look for common real estate image patterns in URL structure
+if (url.includes('zillow.com')) {
+// For Zillow, try to construct a likely image URL
+const zillowMatch = url.match(/\/b\/([^\/]+)\/([^\/]+)\/house\/(\d+)/);
+if (zillowMatch) {
+const [, street, city, zpid] = zillowMatch;
+return `https://photos.zillowstatic.com/fp/${zpid}_cc_ft_768.jpg`;
+}
+}
+if (url.includes('redfin.com')) {
+// For Redfin, try similar approach
+const redfinMatch = url.match(/\/home\/(\d+)/);
+if (redfinMatch) {
+const mlsId = redfinMatch[1];
+return `https://ssl.cdn-redfin.com/photo/1/bigphoto/${mlsId}/1_0.jpg`;
+}
+}
+// Fallback: try to fetch with CORS proxy
 const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
 const response = await fetch(proxyUrl);
 const html = await response.text();
-// Look for common real estate image patterns
-const imgRegex = /<img[^>]+src="([^"]*(?:listing|photo|image|house|property|home)[^"]*\.(?:jpg|jpeg|png|webp))[^"]*"[^>]*>/i;
+// Look for any img tag with common real estate keywords
+const imgRegex = /<img[^>]+src="([^"]*(?:photo|image|house|property|home|listing)[^"]*\.(?:jpg|jpeg|png|webp))[^"]*"[^>]*>/i;
 const match = html.match(imgRegex);
 if (match && match[1]) {
 let imageUrl = match[1];
-// Convert relative URLs to absolute
 if (imageUrl.startsWith('//')) {
 imageUrl = 'https:' + imageUrl;
 } else if (imageUrl.startsWith('/')) {
 const urlObj = new URL(url);
 imageUrl = urlObj.origin + imageUrl;
 }
+console.log('Found image:', imageUrl);
 return imageUrl;
 }
 } catch (error) {
 console.warn('Image extraction failed:', error);
 }
+console.log('No image found for URL:', url);
 return null;
 }
 
