@@ -123,21 +123,28 @@ for (const e of entries) {
 const tr = document.createElement('tr');
 const d = e.details;
 const b = e.breakdown;
-tr.innerHTML = 
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td></td>
-<td><strong></strong></td>
-<td></td>
-<td><button class="danger" data-id="">Remove</button></td>
-;
+const address = escapeHtml(d.address || '');
+const bedrooms = escapeHtml(d.bedrooms || '');
+const bathrooms = escapeHtml(d.bathrooms || '');
+const sqft = escapeHtml(d.sqft || '');
+const lotSqft = escapeHtml(d.lotSqft || '');
+const yearBuilt = escapeHtml(d.yearBuilt || '');
+const link = renderLink(d.listingUrl || '');
+tr.innerHTML = `
+<td>${address}</td>
+<td>${bedrooms}</td>
+<td>${bathrooms}</td>
+<td>${sqft}</td>
+<td>${lotSqft}</td>
+<td>${yearBuilt}</td>
+<td>${formatCurrency(b.monthlyPI)}</td>
+<td>${formatCurrency(b.monthlyTaxes)}</td>
+<td>${formatCurrency(b.monthlyIns)}</td>
+<td>${formatCurrency(b.monthlyHOA)}</td>
+<td><strong>${formatCurrency(b.total)}</strong></td>
+<td>${link}</td>
+<td><button class="danger" data-id="${escapeAttr(e.id)}">Remove</button></td>
+`;
 tbody.appendChild(tr);
 }
 
@@ -159,9 +166,9 @@ if (!url) return '';
 try {
 const u = new URL(url);
 const host = u.host.replace(/^www\./, '');
-return <a href="" target="_blank" rel="noopener noreferrer"></a>;
+return `<a href="${escapeAttr(u.href)}" target="_blank" rel="noopener noreferrer">${escapeHtml(host)}</a>`;
 } catch {
-return <a href="" target="_blank" rel="noopener noreferrer">link</a>;
+return `<a href="${escapeAttr(url)}" target="_blank" rel="noopener noreferrer">link</a>`;
 }
 }
 
