@@ -88,7 +88,7 @@ listingUrl: document.getElementById('listingUrl').value.trim(),
 };
 }
 
-function addEntry() {
+async function addEntry() {
 const details = collectDetailsInputs();
 const inputs = collectCalcInputs();
 const breakdown = computeBreakdown();
@@ -100,6 +100,11 @@ inputs,
 breakdown,
 createdAt: Date.now(),
 };
+
+// Extract image from listing URL if available
+if (details.listingUrl) {
+entry.imageUrl = await extractImageFromUrl(details.listingUrl);
+}
 
 const all = loadSaved();
 all.push(entry);
@@ -127,6 +132,7 @@ for (const e of entries) {
 const tr = document.createElement('tr');
 const d = e.details;
 const b = e.breakdown;
+const i = e.inputs;
 const address = escapeHtml(d.address || '');
 const bedrooms = escapeHtml(d.bedrooms || '');
 const bathrooms = escapeHtml(d.bathrooms || '');
@@ -134,8 +140,12 @@ const sqft = escapeHtml(d.sqft || '');
 const lotSqft = escapeHtml(d.lotSqft || '');
 const yearBuilt = escapeHtml(d.yearBuilt || '');
 const link = renderLink(d.listingUrl || '');
+const price = formatCurrency(i.price || 0);
+const image = renderImage(e.imageUrl || '');
 tr.innerHTML = `
+<td>${image}</td>
 <td>${address}</td>
+<td><strong>${price}</strong></td>
 <td>${bedrooms}</td>
 <td>${bathrooms}</td>
 <td>${sqft}</td>
@@ -180,11 +190,42 @@ function escapeAttr(str) {
 return String(str).replace(/["'<>&]/g, (c) => ({ '"': '&quot;', "'": '&#39;', '<': '&lt;', '>': '&gt;', '&': '&amp;' }[c]));
 }
 
+async function extractImageFromUrl(url) {
+try {
+// Use a CORS proxy to fetch the page content
+const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+const response = await fetch(proxyUrl);
+const html = await response.text();
+// Look for common real estate image patterns
+const imgRegex = /<img[^>]+src="([^"]*(?:listing|photo|image|house|property|home)[^"]*\.(?:jpg|jpeg|png|webp))[^"]*"[^>]*>/i;
+const match = html.match(imgRegex);
+if (match && match[1]) {
+let imageUrl = match[1];
+// Convert relative URLs to absolute
+if (imageUrl.startsWith('//')) {
+imageUrl = 'https:' + imageUrl;
+} else if (imageUrl.startsWith('/')) {
+const urlObj = new URL(url);
+imageUrl = urlObj.origin + imageUrl;
+}
+return imageUrl;
+}
+} catch (error) {
+console.warn('Image extraction failed:', error);
+}
+return null;
+}
+
+function renderImage(imageUrl) {
+if (!imageUrl) return '<span style="color: #999;">No image</span>';
+return `<img src="${escapeAttr(imageUrl)}" alt="Property" style="width: 80px; height: 60px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"><span style="display: none; color: #999;">Image failed</span>`;
+}
+
 function init() {
 document.getElementById('btn-calc').addEventListener('click', updateResults);
-document.getElementById('btn-save').addEventListener('click', () => {
+document.getElementById('btn-save').addEventListener('click', async () => {
 updateResults();
-addEntry();
+await addEntry();
 });
 document.getElementById('btn-clear-all').addEventListener('click', clearAll);
 
