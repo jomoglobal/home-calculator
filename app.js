@@ -438,3 +438,34 @@ updateSyncStatus(`Sync init failed: ${e.message}`, true);
 console.error('Cloud sync init failed', e);
 }
 }
+// === Disable/Remove all listing images (safe append) ===
+(function () {
+    function stripImages(root = document) {
+      // Remove any card photo wrappers and photo <img> tags
+      root.querySelectorAll('.photo-wrap, img.property-photo, #imagePreview, #imagePreviewImg').forEach(el => {
+        try { el.remove(); } catch { /* ignore */ }
+      });
+      // If there's an "Image" column in any table, hide its cells too
+      root.querySelectorAll('th.image, td.image').forEach(el => {
+        el.style.display = 'none';
+      });
+    }
+  
+    // Run immediately (in case initial DOM already has images)
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => stripImages());
+    } else {
+      stripImages();
+    }
+  
+    // Also observe future changes (e.g., when you add new property cards dynamically)
+    const mo = new MutationObserver(muts => {
+      for (const m of muts) {
+        for (const n of m.addedNodes || []) {
+          if (n.nodeType === 1) stripImages(n);
+        }
+      }
+    });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+  })();
+  

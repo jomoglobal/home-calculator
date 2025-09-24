@@ -106,3 +106,25 @@ th, td { text-align: left; padding: 10px; border-bottom: 1px solid var(--border)
 tbody tr:hover { background: rgba(138, 179, 255, 0.06); }
 
 .app-footer { color: var(--muted); }
+
+/* === Disable/Remove all listing images (safe append) === */
+#imagePreview,
+#listingUrl,
+#imageUrl {
+  display: none !important;
+}
+
+.property-card .photo-wrap,
+.property-card img.property-photo {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* If you had a table/list column labeled "Image", hide that header & cells too */
+th.image, td.image {
+  display: none !important;
+}
